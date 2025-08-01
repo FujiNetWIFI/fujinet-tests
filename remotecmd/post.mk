@@ -1,2 +1,0 @@
-$(OBJDIR):
-	mkdir -p $@

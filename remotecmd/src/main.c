@@ -47,7 +47,7 @@ int main()
   }
 
   for (;;) {
-    // Read command, flags, and 4 aux bytes, 
+    // Read command, flags, and 4 aux bytes,
     rlen = network_read(CONTROLLER, &tc_buf, sizeof(tc_buf));
     if (rlen < 0 || fn_device_error)
       break;
@@ -108,7 +108,7 @@ int main()
       fail_count++;
       break;
     }
-    
+
     // Send results back to controller
     wlen = network_write(CONTROLLER, &fn_device_error, 1);
     if (success && tc_buf.reply_len)
