@@ -9,12 +9,13 @@ typedef struct {
   uint16_t size;
 } FujiArg;
 
-typedef struct {
+typedef struct FujiCommand {
   uint8_t command;
   char *name;
   uint8_t argCount;
   FujiArg *args;
   FujiArg reply;
+  struct FujiCommand *next;
 } FujiCommand;
 
 extern uint8_t load_commands(const char *path);

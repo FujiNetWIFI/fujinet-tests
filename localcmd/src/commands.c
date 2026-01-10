@@ -5,7 +5,7 @@
 #define malloc(len) sbrk(len)
 #define strcasecmp(x, y) stricmp(x, y)
 
-uint16_t num_commands = 0;
+//uint16_t num_commands = 0;
 FujiCommand *fuji_commands = 0xAAAA;
 
 void parse_command_arg(FujiArg *arg, const char *buffer)
@@ -35,8 +35,9 @@ void parse_command_arg(FujiArg *arg, const char *buffer)
 uint8_t load_commands(const char *path)
 {
   uint8_t err, cnum;
-  uint16_t count, idx, jdx;
+  uint16_t idx, jdx;
   size_t length;
+  FujiCommand *cmd, *next;
   char query[32];
   char buffer[64];
 
@@ -45,7 +46,8 @@ uint8_t load_commands(const char *path)
   if (err != FN_ERR_OK)
     return err;
 
-  printf("Counting Fuji commands...\n");
+  printf("Loading Fuji commands...\n");
+#if 0
   for (count = 0; ; count++) {
     sprintf(query, "/%d/command", count);
     length = json_query(query, buffer);
@@ -60,8 +62,10 @@ uint8_t load_commands(const char *path)
   printf("Allocating %d bytes\n", idx);
   fuji_commands = (FujiCommand *) malloc(idx);
   printf("FUJI COMMANDS = %04X\n", fuji_commands);
+#endif
 
-  for (idx = 0; idx < count; idx++) {
+  cmd = NULL;
+  for (idx = 0; ; idx++) {
     sprintf(query, "/%d/command", idx);
     length = json_query(query, buffer);
     if (!length)
@@ -73,23 +77,32 @@ uint8_t load_commands(const char *path)
     if (!length)
       break;
 
-    fuji_commands[idx].command = cnum;
-    fuji_commands[idx].name = (char *) malloc(strlen(buffer) + 1);
-    strcpy(fuji_commands[idx].name, buffer);
+    next = (FujiCommand *) malloc(sizeof(FujiCommand));
+    next->next = NULL;
+    if (!cmd)
+      cmd = fuji_commands = next;
+    else {
+      cmd->next = next;
+      cmd = cmd->next;
+    }
 
-    printf("IDX %d == 0x%02x %s\n", idx, fuji_commands[idx].command, fuji_commands[idx].name);
+    cmd->command = cnum;
+    cmd->name = (char *) malloc(strlen(buffer) + 1);
+    strcpy(cmd->name, buffer);
 
-    fuji_commands[idx].reply.name = NULL;
+    printf("IDX %d == 0x%02x %s\n", idx, cmd->command, cmd->name);
+
+    cmd->reply.name = NULL;
 
     sprintf(query, "/%d/reply-%s/0", idx, platform_name());
     length = json_query(query, buffer);
     if (length)
-      parse_command_arg(&fuji_commands[idx].reply, buffer);
+      parse_command_arg(&cmd->reply, buffer);
     else {
       sprintf(query, "/%d/reply/0", idx);
       length = json_query(query, buffer);
       if (length)
-        parse_command_arg(&fuji_commands[idx].reply, buffer);
+        parse_command_arg(&cmd->reply, buffer);
     }
 
     for (jdx = 0; ; jdx++) {
@@ -99,14 +112,14 @@ uint8_t load_commands(const char *path)
         break;
     }
 
-    fuji_commands[idx].argCount = (uint8_t) jdx;
-    if (fuji_commands[idx].argCount) {
-      fuji_commands[idx].args = (FujiArg *) sbrk(sizeof(FujiArg)
-                                                 * fuji_commands[idx].argCount);
-      for (jdx = 0; jdx < fuji_commands[idx].argCount; jdx++) {
+    cmd->argCount = (uint8_t) jdx;
+    if (cmd->argCount) {
+      cmd->args = (FujiArg *) sbrk(sizeof(FujiArg)
+                                                 * cmd->argCount);
+      for (jdx = 0; jdx < cmd->argCount; jdx++) {
         sprintf(query, "/%d/args/%d", idx, jdx);
         length = json_query(query, buffer);
-        parse_command_arg(&fuji_commands[idx].args[jdx], buffer);
+        parse_command_arg(&cmd->args[jdx], buffer);
       }
     }
   }
@@ -118,12 +131,12 @@ uint8_t load_commands(const char *path)
 
 FujiCommand *find_command(const char *name)
 {
-  uint16_t idx;
+  FujiCommand *cmd;
 
 
-  for (idx = 0; idx < num_commands; idx++) {
-    if (!strcasecmp(name, fuji_commands[idx].name))
-      return &fuji_commands[idx];
+  for (cmd = fuji_commands; cmd; cmd = cmd->next) {
+    if (!strcasecmp(name, cmd->name))
+      return cmd;
   }
 
   return NULL;
