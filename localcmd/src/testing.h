@@ -5,6 +5,9 @@
 
 #define FLAG_WARN   0x10
 #define FLAG_EXPERR 0x20
+#define FLAG_EXCEEDS_U8  0x04
+#define FLAG_EXCEEDS_U16 0x02
+
 
 typedef struct {
   uint8_t device;
@@ -15,5 +18,6 @@ typedef struct {
 } TestCommand;
 
 extern bool run_test(TestCommand *test, void *data, void *expected);
+extern void execute_tests(const char *path);
 
 #endif /* TESTING_H */

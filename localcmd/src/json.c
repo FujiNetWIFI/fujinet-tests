@@ -2,7 +2,7 @@
 #include <fujinet-network.h>
 #include <disk.h>
 
-static byte json_buffer[256];
+static char json_buffer[256];
 
 #define PORT "7501"
 #define WRITE_SOCKET "N1:TCP://:" PORT
