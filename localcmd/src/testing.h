@@ -8,7 +8,6 @@
 #define FLAG_EXCEEDS_U8  0x04
 #define FLAG_EXCEEDS_U16 0x02
 
-
 typedef struct {
   uint8_t device;
   uint8_t command;

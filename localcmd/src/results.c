@@ -131,6 +131,10 @@ void print_test_results()
             printf(" WARN");
         if (result->flags & FLAG_EXPERR)
             printf(" EXPERR");
+        if (result->flags & FLAG_EXCEEDS_U8)
+            printf(" EXCEEDS_U8");
+        if (result->flags & FLAG_EXCEEDS_U16)
+            printf(" EXCEEDS_U16");
         printf("\n\n");
         if (result->success)
             pass_count++;

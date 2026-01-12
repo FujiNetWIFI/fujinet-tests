@@ -7,6 +7,7 @@ enum {
   FUJI_DEVICEID_FILE            = 0xAA,
 };
 
+#define malloc(len) sbrk(len)
 #define strcasecmp(x, y) stricmp(x, y)
 
 unsigned int fail_count = 0;
@@ -201,7 +202,7 @@ void execute_tests(const char *path)
     if (bytesread)
       test.flags |= FLAG_EXPERR;
 
-    success == run_test(&test, data, expected);
+    success = run_test(&test, data, expected);
 
     // Record result
     result_ptr = (TestResult *)malloc(sizeof(TestResult));
@@ -214,10 +215,12 @@ void execute_tests(const char *path)
     result_list_insert(&result_list, result_ptr);
 
     if (!(test.flags & FLAG_WARN) && !success)
+    {
       printf("TEST FAILED\n");
       return;
     }
 
+    count++;
   }
 
   json_close();
