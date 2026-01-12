@@ -66,3 +66,4 @@ cmdtest/cmdtest.*
 remotecmd/rmttest.*
 _cache/
 r2r/
+localcmd/.vscode/c_cpp_properties.json

@@ -1,7 +1,9 @@
 #include "json.h"
 #include "commands.h"
 #include "testing.h"
+#include "results.h"
 
+#define malloc(len) sbrk(len)
 #define strcasecmp(x, y) stricmp(x, y)
 
 #define FLAG_EXCEEDS_U8  0x04
@@ -67,7 +69,7 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
   return;
 }
 
-void get_json_data(void)
+int get_json_data(void)
 {
     char command[50];
     int16_t bytesread;
@@ -78,10 +80,13 @@ void get_json_data(void)
     TestCommand test;
     int auxpos;
     void *data, *expected;
+    bool success;
+    TestResult *result_ptr;
+
+    result_list_init(&result_list);
 
     while (true)
     {
-
         sprintf(query, "/%d/command", count);
         bytesread = json_query(query, command);
         if (!bytesread) // If we didn't get any more objects with "command" in them, we're done.
@@ -93,7 +98,7 @@ void get_json_data(void)
         cmd = find_command(command);
         if (!cmd) {
           printf("Unknown command\n");
-          return;
+          return -1;
         }
         printf("found: %s\n", cmd->name);
 
@@ -117,7 +122,7 @@ void get_json_data(void)
           bytesread = json_query(query, command);
           if (!bytesread) {
             printf("Argument %s missing\n", cmd->args[idx].name);
-            return;
+            return count;
           }
           printf("Arg %s = %s\n", cmd->args[idx].name, command);
           add_test_argument(&test, &cmd->args[idx], command, &auxpos, (const void **) &data);
@@ -142,21 +147,49 @@ void get_json_data(void)
         if (bytesread)
           test.flags |= FLAG_EXPERR;
 
-        if (!run_test(&test, data, expected)) {
-          printf("TEST FAILED\n");
-          return;
-        }
+        success = run_test(&test, data, expected);
+
+        result_ptr = (TestResult *) malloc(sizeof(TestResult));
+        result_ptr->command_name = cmd->name;
+        result_ptr->command = test.command;
+        result_ptr->device = test.device;
+        result_ptr->success = success;
+        result_ptr->flags = test.flags;
+
+        result_list_insert(&result_list, result_ptr);
 
         count++;
-        waitkey(1);
+
+        if (!(test.flags & FLAG_WARN) && !success)
+        {
+            printf("TEST FAILED\n");
+            return count;
+        }
+
     }
 
     printf("\n%d tests read.\n", count);
+    return count;
 }
 
 int main(void)
 {
+    int test_count;
+
+#ifdef _CMOC_VERSION_
+    initCoCoSupport();
+    if (isCoCo3)
+    {
+        width(80);
+    }
+    else
+    {
+        width(32);
+    }
+#else
     cls(1);
+#endif /* _CMOC_VERSION_ */
+
 
     load_commands("COMMANDS.JSN");
 
@@ -166,8 +199,14 @@ int main(void)
     }
 
     printf("Getting json data\n");
-    get_json_data();
+    test_count = get_json_data();
     json_close();
+    printf("Tests complete.  Press any key to see results...\n");
+#ifdef _CMOC_VERSION_    
+    waitkey(0);
+#else    
+#endif
+    print_test_results();
 
     return 0;
 }

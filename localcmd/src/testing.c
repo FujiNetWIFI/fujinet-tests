@@ -21,7 +21,6 @@ bool run_test(TestCommand *test, void *data, void *expected)
          test->aux1, test->aux2, test->aux3, test->aux4,
          test->data_len, test->reply_len);
 
-  waitkey(1);
   printf("Executing 0x%02x:%02x\n", test->device, test->command);
 #if 0
   if (test->device >= FUJI_DEVICEID_DISK && test->device <= FUJI_DEVICEID_DISK_LAST) {
@@ -56,3 +55,4 @@ bool run_test(TestCommand *test, void *data, void *expected)
 
   return success;
 }
+
