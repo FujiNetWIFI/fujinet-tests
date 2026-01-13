@@ -1,6 +1,12 @@
 #include "json.h"
 #include <fujinet-network.h>
+#ifdef _CMOC_VERSION_
 #include <disk.h>
+#else
+#include <stdio.h>
+#include <string.h>
+#include <conio.h>
+#endif /* _CMOC_VERSION_ */
 
 static char json_buffer[256];
 

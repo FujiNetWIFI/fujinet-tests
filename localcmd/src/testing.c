@@ -3,6 +3,12 @@
 #include "json.h"
 #include "results.h"
 
+#ifndef _CMOC_VERSION_
+#include <stdio.h>
+#include <string.h>
+#include <conio.h>
+#endif /* _CMOC_VERSION_ */
+
 enum {
   FUJI_DEVICEID_FILE            = 0xAA,
 };

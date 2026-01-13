@@ -2,6 +2,12 @@
 #include "json.h"
 #include "platform.h"
 
+#ifndef _CMOC_VERSION_
+#include <stdio.h>
+#include <string.h>
+#include <conio.h>
+#endif /* _CMOC_VERSION_ */
+
 #define malloc(len) sbrk(len)
 #define strcasecmp(x, y) stricmp(x, y)
 
