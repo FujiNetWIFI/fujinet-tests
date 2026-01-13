@@ -36,9 +36,6 @@
   {
     "command": "read_device_slots"
   },
-  {
-    "command": "get_device1_fullpath"
-  },
 
   {
     "command": "get_device_fullpath",

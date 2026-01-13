@@ -13,6 +13,22 @@ enum {
   FUJI_DEVICEID_FILE            = 0xAA,
 };
 
+typedef struct {
+  uint8_t num;
+  const char *name;
+} FujiDeviceID;
+
+const FujiDeviceID fujiDeviceTable[] = {
+  {FUJI_DEVICEID_FUJINET, "FUJINET"},
+  {FUJI_DEVICEID_CLOCK,   "APETIME"},
+  {FUJI_DEVICEID_CPM,     "CPM"},
+  {FUJI_DEVICEID_MIDI,    "MIDI"},
+  {FUJI_DEVICEID_VOICE,   "VOICE"},
+  {0, NULL},
+};
+
+#define FLAG_MASK ((uint8_t) ~(FLAG_WARN | FLAG_EXPERR))
+
 #define malloc(len) sbrk(len)
 #define strcasecmp(x, y) stricmp(x, y)
 
@@ -50,13 +66,16 @@ bool run_test(TestCommand *test, void *data, void *expected)
   }
   else {
 #endif // 0
-    success = fuji_bus_call(test->device, test->command, test->flags & 0b11101111,
+    success = fuji_bus_call(test->device, test->command, test->flags & FLAG_MASK,
                             test->aux1, test->aux2, test->aux3, test->aux4,
                             data, test->data_len,
                             test->reply_len ? reply : (uint8_t *) NULL, test->reply_len);
 #if 0
   }
 #endif // 0
+
+  if (test->flags & FLAG_EXPERR)
+    success = !success;
 
   if (!(test->flags & FLAG_WARN) && !success)
     fail_count++;
@@ -135,7 +154,7 @@ void execute_tests(const char *path)
   int count = 0;
   char query[256];
   FujiCommand *cmd;
-  uint16_t idx;
+  uint16_t idx, dev_idx;
   TestCommand test;
   int auxpos;
   void *data, *expected;
@@ -167,8 +186,17 @@ void execute_tests(const char *path)
     if (!bytesread)
       test.device = FUJI_DEVICEID_FUJINET;
     else {
-      printf("FIXME - deal with device %s\n", command);
-      exit(1);
+      for (dev_idx = 0; fujiDeviceTable[dev_idx].num; dev_idx++) {
+        if (!strcasecmp(fujiDeviceTable[dev_idx].name, command)) {
+          test.device = fujiDeviceTable[dev_idx].num;
+          break;
+        }
+      }
+
+      if (!fujiDeviceTable[dev_idx].num) {
+        printf("Unknown device %s\n", command);;
+        exit(1);
+      }
     }
 
     test.command = cmd->command;
