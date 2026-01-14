@@ -1,9 +1,10 @@
-#include "commands.h"
-#include "json.h"
-#include "platform.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "commands.h"
+#include "json.h"
+#include "platform.h"
 
 FujiCommand *fuji_commands = NULL;
 
@@ -120,7 +121,7 @@ FujiCommand *find_command(const char *name)
 
 
   for (cmd = fuji_commands; cmd; cmd = cmd->next) {
-    if (!strcasecmp(name, cmd->name))
+    if (!stricmp(name, cmd->name))
       return cmd;
   }
 

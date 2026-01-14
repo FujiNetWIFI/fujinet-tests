@@ -1,11 +1,12 @@
-#include "results.h"
-#include "testing.h"
-#include "platform.h"
-#include <fujinet-fuji.h> // for bool
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <conio.h>
+#include <fujinet-fuji.h> 
+
+#include "results.h"
+#include "testing.h"
+#include "platform.h"
 
 ResultList result_list;
 AdapterConfigExtended config;
@@ -107,21 +108,18 @@ bool result_list_insert(ResultList *list, TestResult *tr)
 
 void print_test_result_header(char *fn_version)
 {
+    char platform_num_buf[4];
     printf("Test Results:\n");
     printf("FujiNet Version: %s\n\n", fn_version);
     printf("Platform name: %s ", platform_name());
-#ifdef _CMOC_VERSION_
-    if (isCoCo3)
+
+    platform_number_string(platform_num_buf);
+    if (platform_num_buf[0] != '\0')
     {
-        printf("3\n\n");
-    }
-    else
-    {
-        printf("1/2\n\n");
+        printf("(%s)", platform_num_buf);
     }   
-#else
+
     printf("\n\n");
-#endif /* _CMOC_VERSION_ */
 }
 
 void print_test_results()
@@ -132,21 +130,7 @@ void print_test_results()
     int warn_count = 0;
     ResultNode *n;
     TestResult *result;
-    int screen_width = 40;
-    int page_size = 20;
 
-#ifdef BUILD_COCO
-    if (isCoCo3)
-    {
-        page_size = 18;
-        screen_width = 40;
-    }
-    else
-    {
-        page_size = 10;
-        screen_width = 32;
-    }
-#endif /* BUILD_COCO */
     clrscr();
 
     fuji_get_adapter_config_extended(&config);
@@ -195,13 +179,8 @@ void print_test_results()
             if (count != 0)
             {
                 printf("\nPress any key to continue...");
-#ifdef _CMOC_VERSION_                
-                waitkey(0);
-                cls(1);
-#else
                 cgetc();
                 clrscr();
-#endif /* _CMOC_VERSION_ */
                 print_test_result_header(config.fn_version);
             }
 
@@ -212,10 +191,10 @@ void print_test_results()
 
     if (screen_width > 32)
     {
-        printf("\nTotal: %u Passed: %u  Warn: %u Failed: %u", count, pass_count, warn_count, count - pass_count - warn_count);
+        printf("\nTotal: %u Passed: %u  Warn: %u Failed: %u\n", count, pass_count, warn_count, count - pass_count - warn_count);
     }
     else
     {
-        printf("\nTotal: %u\nPassed: %u Warn: %uFailed: %u", count, pass_count, warn_count, count - pass_count - warn_count);
+        printf("\nTotal: %u\nPassed: %u Warn: %uFailed: %u\n", count, pass_count, warn_count, count - pass_count - warn_count);
     }
 }

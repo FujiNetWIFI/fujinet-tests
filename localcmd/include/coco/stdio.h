@@ -1,5 +1,6 @@
 #define MAX_STDIO_OPEN_FILES 4
 
+#include <cmoc.h>
 #include <coco.h>
 
 typedef uint8_t FILE;

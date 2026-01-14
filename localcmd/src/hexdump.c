@@ -1,9 +1,5 @@
-#include "hexdump.h"
-#ifndef _CMOC_VERSION_
 #include <stdio.h>
-#else
-#include <cmoc.h>
-#endif
+#include "hexdump.h"
 
 #define COLUMNS 16
 

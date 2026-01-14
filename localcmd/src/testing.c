@@ -1,12 +1,14 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "testing.h"
 #include "commands.h"
 #include "json.h"
 #include "results.h"
 #include "diskcmd.h"
 #include "filecmd.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
 
 enum {
   FUJI_DEVICEID_FILE            = 0xAA,
@@ -109,7 +111,7 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
   switch (arg->type) {
   case 'b':
     val = 0;
-    if (!strcasecmp(input, "TRUE"))
+    if (!stricmp(input, "TRUE"))
       val = 1;
     else if (atoi(input))
       val = 1;
@@ -175,7 +177,7 @@ void execute_tests(const char *path)
       test.device = FUJI_DEVICEID_FUJINET;
     else {
       for (dev_idx = 0; fujiDeviceTable[dev_idx].num; dev_idx++) {
-        if (!strcasecmp(fujiDeviceTable[dev_idx].name, command)) {
+        if (!stricmp(fujiDeviceTable[dev_idx].name, command)) {
           test.device = fujiDeviceTable[dev_idx].num;
           break;
         }

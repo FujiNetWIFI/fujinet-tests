@@ -1,7 +1,8 @@
-#include "json.h"
-#include <fujinet-network.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fujinet-network.h>
+
+#include "json.h"
 
 static char json_buffer[256];
 
