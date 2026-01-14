@@ -141,7 +141,7 @@ void print_test_results()
     if (isCoCo3)
     {
         page_size = 18;
-        screen_width = 80;
+        screen_width = 40;
     }
     else
     {

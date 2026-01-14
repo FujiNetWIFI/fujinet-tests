@@ -161,6 +161,7 @@ void execute_tests(const char *path)
   bool success;
   TestResult *result_ptr;
 
+  printf("Running tests...\n");
 
   if (json_open("TESTS.JSN") != FN_ERR_OK) {
     printf("Failed to open JSON file\n");

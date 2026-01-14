@@ -16,7 +16,7 @@ int main(void)
     initCoCoSupport();
     if (isCoCo3)
     {
-        width(80);
+        width(40);
     }
     else
     {
@@ -27,22 +27,21 @@ int main(void)
     clrscr();
 #endif /* _CMOC_VERSION_ */
 
-    printf("Loading commands\n");
     load_commands("COMMANDS.JSN");
-    printf("Running tests\n");
     execute_tests("TESTS.JSN");
 #ifdef _CMOC_VERSION_
     if (isCoCo3)
     {
-        printf("\nTests complete. Press any key for results.");  
+        printf("\nTests complete. Press a key for results.");  
     }
     else
     {
         printf("\n<Tests complete.>\n");  
+        printf("Press a key for results."); 
     }
     waitkey(0);
 #else
-    printf("\nTests complete. Press anykey for results.");  
+    printf("\nTests complete. Press a key for results.");  
     cgetc();
 #endif
     print_test_results();
