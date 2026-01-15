@@ -18,7 +18,7 @@ typedef struct FujiCommand {
   struct FujiCommand *next;
 } FujiCommand;
 
-extern uint8_t load_commands(const char *path);
+extern int load_commands(const char *path);
 extern FujiCommand *find_command(const char *name);
 
 #endif /* COMMANDS_H */

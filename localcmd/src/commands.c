@@ -35,7 +35,7 @@ void parse_command_arg(FujiArg *arg, const char *buffer)
   return;
 }
 
-uint8_t load_commands(const char *path)
+int load_commands(const char *path)
 {
   uint8_t err, cnum;
   uint16_t idx, jdx;

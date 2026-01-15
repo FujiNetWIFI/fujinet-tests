@@ -5,6 +5,8 @@
 #include <coco.h>
 
 #define MAX_STDIO_OPEN_FILES 4
+#define fflush(stream) /* no-op */
+#define stdout 0
 
 typedef void FILE;
 
