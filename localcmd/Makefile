@@ -28,6 +28,7 @@ CFLAGS = -DBUILD_$(PLATFORM_UC)
 # - empty which will use whatever is the latest
 # - undefined, no fujinet-lib will be used
 FUJINET_LIB = https://github.com/FozzTexx/fujinet-lib-experimental.git
+#FUJINET_LIB = /home/rich/fujinet-lib-unified
 
 # Define extra dirs ("combos") that expand with a platform.
 # Format: platform+=combo1,combo2
@@ -46,8 +47,12 @@ include makefiles/toplevel-rules.mk
 # or
 #   apple2/disk: apple2/custom-step1 apple2/custom-step2
 
-DISK_EXTRA_FILES = commands.jsn tests.jsn
-DISK_EXTRA_FILES_ATARI = DOS.SYS
+DISK_EXTRA_DEPS_COCO = src/coco/autoexec.bas
+
+coco/disk-post::
+	decb copy -t -0 src/coco/autoexec.bas "$(DISK),AUTOEXEC.BAS"
+
+DISK_EXTRA_FILES = commands.jsn tests.tst
 
 CFLAGS_EXTRA_MSX = -DAMALLOC
 LDFLAGS_EXTRA_MSX = -pragma-define:CRT_HEAP_AMALLOC=3
