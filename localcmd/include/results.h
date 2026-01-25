@@ -30,11 +30,6 @@ typedef struct {
 extern AdapterConfigExtended fn_config;
 extern ResultList result_list;
 
-#define RESULTLIST_FOR_EACH(node_ptr, list_ptr) \
-  for (ResultNode *(node_ptr) = (list_ptr)->head; \
-       (node_ptr) != NULL; \
-       (node_ptr) = (node_ptr)->next)
-
 void result_list_init(ResultList *list);
 bool result_list_insert(ResultList *list, TestResult *tr);
 void print_test_results();

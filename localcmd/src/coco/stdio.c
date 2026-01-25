@@ -132,13 +132,14 @@ void denormalizeFilename(char *dest, const char *src)
 
 byte find_file_by_extension(char *outfname, const char *ext)
 {   
+    byte dirSector[256];
     char extbuf[4];
-    char entry_fname[9];
+    char entry_fname[12];
     
     printf("SEARCHING FOR: *.%s\n", ext);
     for (byte sector = 3; sector <= 18; ++sector)
     { 
-        byte dirSector[256];
+
         printf("READING DIRECTORY on DRIVE: %d\n", curDriveNo);
         if (!readDiskSector(dirSector, curDriveNo, 17, sector))
             return 0;  // TODO: report I/O error instead of "not found"
@@ -152,20 +153,6 @@ byte find_file_by_extension(char *outfname, const char *ext)
             if (*entry == 0xFF)  // if end of dir
                 break;
 
-            for (int i; i <11; i++)
-            {
-              if (isprint(entry[i]))
-              {
-                putchar(entry[i]);
-              }
-              else
-              {
-                printf(" 0x%02x", entry[i]);
-              }
-            }
-            printf("\n");
-            waitkey(0);
-
             // Get the extension of the directory entry
             memcpy(extbuf, &entry[8], 3);
             extbuf[3] = '\0';
@@ -175,6 +162,7 @@ byte find_file_by_extension(char *outfname, const char *ext)
 
                 memcpy(entry_fname, entry, 11);
                 denormalizeFilename(outfname, entry_fname);
+                printf ("FOUND: %s\n", outfname);
 
                 return 1;  // found
             }

@@ -4,6 +4,7 @@
 #include "platform.h"
 #include "console.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,6 +19,7 @@ int main(void)
 {
     uint8_t fail_count = 0;
     FN_ERR err;
+    char testfname[13];
 
     console_init();
     clrscr();
@@ -36,7 +38,19 @@ int main(void)
       exit(1);
     }
 
-    execute_tests("TESTS.JSN");
+#ifdef _CMOC_VERSION_
+    if (!find_file_by_extension(testfname, "TST"))
+    {
+        printf("NO TEST FILE FOUND!\n");
+        exit(1);
+    }
+#else
+    strcpy(testfname, "TESTS.TST");
+#endif
+
+    printf("RUNNING TESTS: %s\n", testfname);
+    execute_tests(testfname);
+
     printf("DONE\n");
     if (console_width > 32)
     {
