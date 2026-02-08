@@ -5,59 +5,66 @@
 #define MAX_STR_LEN 128
 #define MAX_PATTERN_LEN 64
 
-// Function that matches input string against given wildcard pattern
+// Helper function for recursive matching
+static bool match_char(char str_ch, char pat_ch)
+{
+    if (pat_ch == '?')
+        return true;
+    if (pat_ch == '#')
+        return (bool)isdigit((unsigned char)str_ch);
+    if (pat_ch == '@')
+        return (bool)isalpha((unsigned char)str_ch);
+    if (pat_ch == '%')
+        return (bool)isalnum((unsigned char)str_ch);
+
+    return (str_ch == pat_ch ||
+            tolower((unsigned char)str_ch) == tolower((unsigned char)pat_ch));
+}
+
+// Recursive wildcard matching function
 bool wildcard_match(const char *str, const char *pattern)
 {
-    int m, n, i, j;
-    static bool lookup[MAX_STR_LEN + 1][MAX_PATTERN_LEN + 1];
-    
     if (str == NULL || pattern == NULL)
         return false;
     
-    m = strlen(pattern);
-    n = strlen(str);
+    // If we reach end of both strings, it's a match
+    if (*pattern == '\0')
+        return (*str == '\0');
     
-    // Check bounds
-    if (n > MAX_STR_LEN || m > MAX_PATTERN_LEN)
-        return false;
-    
-    // Empty pattern can only match with empty string
-    if (m == 0)
-        return (n == 0);
-    
-    // Initialize lookup table to false
-    memset(lookup, 0, sizeof(lookup));
-    
-    // Empty pattern can match with empty string
-    lookup[0][0] = true;
-    
-    // Only '*' can match with empty string
-    for (j = 1; j <= m; j++)
-        if (pattern[j - 1] == '*')
-            lookup[0][j] = lookup[0][j - 1];
-    
-    // Fill the table in bottom-up fashion
-    for (i = 1; i <= n; i++)
+    // Handle '*' wildcard
+    if (*pattern == '*')
     {
-        for (j = 1; j <= m; j++)
+        // Skip consecutive '*' characters
+        while (*pattern == '*')
+            pattern++;
+        
+        // If '*' is at the end, it matches everything remaining
+        if (*pattern == '\0')
+            return true;
+        
+        // Try matching '*' with empty string, or with one or more characters
+        while (*str != '\0')
         {
-            if (pattern[j - 1] == '*')
-            {
-                lookup[i][j] = lookup[i][j - 1] || lookup[i - 1][j];
-            }
-            else if (pattern[j - 1] == '?' ||
-                     (pattern[j - 1] == '#' && isdigit((unsigned char)str[i - 1])) ||
-                     (pattern[j - 1] == '@' && isalpha((unsigned char)str[i - 1])) ||
-                     (pattern[j - 1] == '%' && isalnum((unsigned char)str[i - 1])) ||
-                     str[i - 1] == pattern[j - 1] ||
-                     tolower((unsigned char)str[i - 1]) == tolower((unsigned char)pattern[j - 1]))
-            {
-                lookup[i][j] = lookup[i - 1][j - 1];
-            }
-            else
-                lookup[i][j] = false;
+            if (wildcard_match(str, pattern))
+                return true;
+            str++;
         }
+        
+        // Try matching '*' with empty string at end
+        return wildcard_match(str, pattern);
     }
     
-    return lookup[n][m];
+    // If string is empty but pattern is not (and not '*'), no match
+    if (*str == '\0')
+        return false;
+    
+    // Check if current characters match
+    if (match_char(*str, *pattern))
+    {
+        // Move to next characters
+        return wildcard_match(str + 1, pattern + 1);
+    }
+    
+    // Characters don't match
+    return false;
 }

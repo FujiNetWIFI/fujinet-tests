@@ -24,7 +24,6 @@ FN_ERR json_open(const char *path)
   size_t length, total;
   FILE *fd;
 
-
   fd = fopen(path, "r");
   if (!fd) {
     printf("Failed to open %s %d\n", path, errno);
@@ -76,7 +75,7 @@ FN_ERR json_open(const char *path)
       break;
     }
     err = network_write(WRITE_SOCKET, json_buffer, length);
-    printf("%d ", total + length);
+    //printf("%d ", total + length);
     fflush(stdout);
     if (err != FN_ERR_OK)
       break;

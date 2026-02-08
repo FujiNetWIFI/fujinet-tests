@@ -109,6 +109,8 @@
      "args": ["version:u8", "ecc_mode:u8", "shorten:u8"]},
     {"command": 188, "name": "QRCODE_INPUT",
      "args": ["length:u16", "data:s8"]},
+    {"command": 187, "name": "GET_GUID",
+     "reply": ["data:s37"]},
     {"command": 167, "name": "GET_DEVICE8_FULLPATH",
      "reply": ["path:f256"]},
     {"command": 166, "name": "GET_DEVICE7_FULLPATH",

@@ -41,7 +41,6 @@ bool find_file_by_extension(char *outfname, const char *ext)
     entry = readdir(dirp);
     if (!entry)
       break;
-    printf("ENTRY \"%s\"\n", entry->d_name);
     p = strchr(entry->d_name, '.');
     if (p && !strcasecmp(p + 1, ext))
       break;
@@ -52,6 +51,7 @@ bool find_file_by_extension(char *outfname, const char *ext)
     return 0;
 
   strcpy(outfname, entry->d_name);
+  printf("FOUND \"%s\"\n", entry->d_name);
   return 1;
 }
 

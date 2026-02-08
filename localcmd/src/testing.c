@@ -8,6 +8,7 @@
 #include "results.h"
 #include "diskcmd.h"
 #include "filecmd.h"
+#include "wildcard.h"
 
 enum {
   FUJI_DEVICEID_FILE            = 0xAA,
@@ -34,29 +35,31 @@ const FujiDeviceID fujiDeviceTable[] = {
 #define FLAG_MASK ((uint8_t) ~(FLAG_WARN | FLAG_EXPERR))
 
 unsigned int fail_count = 0;
-static uint8_t data_buf[256], reply_buf[256];
-char command[50];
-char query[256];
+static uint8_t data_buf[256], reply_buf[256], expected_buf[256];
 
 bool run_test(TestCommand *test, void *data, const void *expected)
 {
   bool success;
 
-
   printf("Received command: 0x%02x:%02x\n"
-         "  FLAGS: 0x%02x\n"
-         "  AUX: 0x%02x 0x%02x 0x%02x 0x%02x\n"
-         "  DATA: %d \"%s\"\n"
-         "  REPLY: %d\n",
+         "   FLAGS: 0x%02x\n"
+         "     AUX: 0x%02x 0x%02x 0x%02x 0x%02x\n"
+         "    DATA: %d \"%s\"\n"
+         "   REPLY: %d\n",
          test->device, test->command,
          test->flags,
          test->aux1, test->aux2, test->aux3, test->aux4,
          test->data_len, data ? (const char *) data : "<NULL>",
          test->reply_len);
 
+  if (expected)
+  {
+    printf("EXPECTED: %s\n", (const char *) expected);
+  }
+
   printf("Executing 0x%02x:%02x\n", test->device, test->command);
   if (test->device >= FUJI_DEVICEID_DISK && test->device <= FUJI_DEVICEID_DISK_LAST) {
-    // Disks are handled by the opearating system
+    // Disks are handled by the operating system
     success = disk_command(test, data, reply_buf, sizeof(reply_buf));
   }
   else if (test->device == FUJI_DEVICEID_FILE) {
@@ -74,7 +77,9 @@ bool run_test(TestCommand *test, void *data, const void *expected)
     success = !success;
 
   if (expected)
-    success = !strcmp((const char *) expected, (char *) reply_buf);
+  {
+      success = wildcard_match((const char *)reply_buf, (const char *) expected);
+  }
 
   if (!(test->flags & FLAG_WARN) && !success)
     fail_count++;
@@ -112,7 +117,6 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
                        int *auxpos, const void **dataptr)
 {
   int val;
-
 
   switch (arg->type) {
   case 'b':
@@ -159,6 +163,8 @@ void execute_tests(const char *path)
   void *data, *expected;
   bool success;
   TestResult *result_ptr;
+  char command[50];
+  char query[50];
 
   printf("Running tests...\n");
 
@@ -226,7 +232,17 @@ void execute_tests(const char *path)
     else if (cmd->reply.type == 'f')
       exec_test.reply_len = cmd->reply.size;
 
-    // FIXME - get expected
+    sprintf(query, "/%d/expected", count);
+    bytesread = json_query(query, command);
+    if (bytesread)
+    {
+      strncpy(expected_buf, command, bytesread);
+      expected = (char *) expected_buf;
+    }
+    else
+    {
+      expected = NULL;
+    }
 
     sprintf(query, "/%d/warnOnly", count);
     bytesread = json_query(query, command);
@@ -239,6 +255,7 @@ void execute_tests(const char *path)
       exec_test.flags |= FLAG_EXPERR;
 
     success = run_test(&exec_test, data, expected);
+
 
     // Record result
     result_ptr = (TestResult *)malloc(sizeof(TestResult));

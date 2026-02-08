@@ -54,5 +54,11 @@
     "device_slot": 1,
     "mode": 64,
     "errorExpected": true
+  },
+
+  {
+    "command": "get_guid",
+    "replyLength": 37,
+    "expected": "%%%%%%%%-%%%%-%%%%-%%%%-%%%%%%%%%%%%"
   }
 ]
