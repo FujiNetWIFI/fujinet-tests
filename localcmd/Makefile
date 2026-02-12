@@ -51,14 +51,15 @@ TESTLOAD_BIN = r2r/coco/testload.bin
 AUTOEXEC_COCO = src/coco/autoexec.bas
 DISK_EXTRA_DEPS_COCO := $(AUTOEXEC_COCO) $(TESTLOAD_BIN)
 
-$(TESTLOADBIN):: $(TESTLOAD_COCO) | $(R2R_PD)
+$(TESTLOAD_BIN):: $(TESTLOAD_COCO) | $(R2R_PD)
 	cmoc -o $@ $<
-DISK_EXTRA_DEPS_COCO = src/coco/autoexec.bas
+  
+DISK_EXTRA_DEPS_COCO = $(TESTLOAD_BIN) $(AUTOEXEC_COCO)
 LDFLAGS_EXTRA_COCO = --org=0E00 --limit=7C00
 
 coco/disk-post::
 	decb copy -t -0 $(AUTOEXEC_COCO) "$(DISK),AUTOEXEC.BAS"
-	decb copy -b -2 $(TESTLOAD_BIN) "$(DISK),TESTLOAD.BIN"
+	writecocofile $(DISK) $(TESTLOAD_BIN)
 
 DISK_EXTRA_FILES = commands.jsn tests.tst
 DISK_EXTRA_FILES_ATARI = DOS.SYS
