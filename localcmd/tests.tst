@@ -1,1 +1,1 @@
-guid.tst
+../unitrix/standard-tests.json

@@ -46,18 +46,29 @@ include makefiles/toplevel-rules.mk
 # or
 #   apple2/disk: apple2/custom-step1 apple2/custom-step2
 
-DISK_EXTRA_DEPS_COCO = src/coco/autoexec.bas
+TESTLOAD_COCO = src/coco/testload/testload.c
+TESTLOAD_BIN = r2r/coco/testload.bin
+AUTOEXEC_COCO = src/coco/autoexec.bas
+DISK_EXTRA_DEPS_COCO := $(AUTOEXEC_COCO) $(TESTLOAD_BIN)
+
+$(TESTLOADBIN):: $(TESTLOAD_COCO) | $(R2R_PD)
+	cmoc -o $@ $<
 
 coco/disk-post::
-	decb copy -t -0 src/coco/autoexec.bas "$(DISK),AUTOEXEC.BAS"
+	decb copy -t -0 $(AUTOEXEC_COCO) "$(DISK),AUTOEXEC.BAS"
+	decb copy -b -2 $(TESTLOAD_BIN) "$(DISK),TESTLOAD.BIN"
 
 DISK_EXTRA_FILES = commands.jsn tests.tst
 DISK_EXTRA_FILES_ATARI = DOS.SYS
 DISK_TOOL_FLAGS_ATARI = -S -b Dos25
 EXEC_NAME_ATARI = AUTORUN.SYS
 
+LDFLAGS_EXTRA_COCO = --org=0E00 --limit=7C00
+
 CFLAGS_EXTRA_MSX = -DAMALLOC
 LDFLAGS_EXTRA_MSX = -pragma-define:CRT_HEAP_AMALLOC=3
 
 CFLAGS_EXTRA_ADAM_CPM = -DAMALLOC
 LDFLAGS_EXTRA_ADAM_CPM = -pragma-define:CRT_HEAP_AMALLOC=3
+
+

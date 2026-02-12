@@ -43,6 +43,12 @@
   },
 
   {
+    "command": "get_guid",
+    "replyLength": 37,
+    "expected": "%%%%%%%%-%%%%-%%%%-%%%%-%%%%%%%%%%%%"
+  },
+
+  {
     "device": "apetime",
     "command": "get_time_iso",
     "replyLength": 25
