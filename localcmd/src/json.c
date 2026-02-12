@@ -1,8 +1,13 @@
 #include "json.h"
 #include <fujinet-network.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+
+#ifdef __COLECOADAM__
+#include <stdio_cpm.h>
+#else /* ! __COLECOADAM__ */
+#include <stdio.h>
+#endif /* __COLECOADAM__ */
 
 static char json_buffer[256];
 
@@ -10,7 +15,6 @@ static char json_buffer[256];
 #define WRITE_SOCKET "N1:TCP://:" PORT
 #define READ_SOCKET "N2:TCP://localhost:" PORT
 
-#define MAX_RETRIES 5
 #define MAX_CONN_WAIT 10
 
 // Open Watcom can't do far pointers in a function declaration
@@ -35,29 +39,21 @@ FN_ERR json_open(const char *path)
   if (err != FN_ERR_OK)
     return err;
 
-  for (retries = 0; retries < MAX_RETRIES; retries++) {
-    printf("Opening read socket (%s)...\n", READ_SOCKET);
-    err = network_open(READ_SOCKET, OPEN_MODE_READ, 0);
+  printf("Opening read socket (%s)...\n", READ_SOCKET);
+  err = network_open(READ_SOCKET, OPEN_MODE_READ, 0);
+  if (err != FN_ERR_OK)
+    return err;
+
+  for (status_count = 0; status_count < MAX_CONN_WAIT; status_count++) {
+    err = network_status(WRITE_SOCKET, &avail, &status, &err);
+    //printf("AVAIL: %u  STATUS: %u  ERR: %u\n", avail, status, err);
     if (err != FN_ERR_OK)
       return err;
-
-    for (status_count = 0; status_count < MAX_CONN_WAIT; status_count++) {
-      err = network_status(WRITE_SOCKET, &avail, &status, &err);
-      //printf("AVAIL: %u  STATUS: %u  ERR: %u\n", avail, status, err);
-      if (err != FN_ERR_OK)
-        return err;
-      if (status == 1)
-        break;
-    }
-
-    if (status_count < MAX_CONN_WAIT)
+    if (status == 1)
       break;
-
-    printf("Closing " READ_SOCKET "\n");
-    network_close(READ_SOCKET);
   }
 
-  if (retries >= MAX_RETRIES)
+  if (status_count >= MAX_CONN_WAIT)
     return FN_ERR_IO_ERROR;
 
   printf("DOING ACCEPT\n");

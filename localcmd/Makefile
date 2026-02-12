@@ -53,6 +53,8 @@ DISK_EXTRA_DEPS_COCO := $(AUTOEXEC_COCO) $(TESTLOAD_BIN)
 
 $(TESTLOADBIN):: $(TESTLOAD_COCO) | $(R2R_PD)
 	cmoc -o $@ $<
+DISK_EXTRA_DEPS_COCO = src/coco/autoexec.bas
+LDFLAGS_EXTRA_COCO = --org=0E00 --limit=7C00
 
 coco/disk-post::
 	decb copy -t -0 $(AUTOEXEC_COCO) "$(DISK),AUTOEXEC.BAS"

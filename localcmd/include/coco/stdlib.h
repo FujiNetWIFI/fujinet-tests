@@ -4,6 +4,6 @@
 #include <cmoc.h>
 #include <coco.h>
 
-#define malloc(len) sbrk(len)
+extern void *malloc(uint16_t len);
 
 #endif /* STDLIB_H */

@@ -116,7 +116,7 @@ void print_test_result_header(char *fn_version)
 {
     int fail_count = total - pass_count - warn_count;
 
-    printf("FujiNet FW: %s\n\n", fn_version);
+    printf("LCLTEST: %s FujiNet FW: %s\n\n", GIT_VERSION, fn_version);
     printf("Computer: %s\n", computer_model());
     printf("Total: %d PASS: %d WARN: %d FAIL: %d\n",
            total, pass_count, warn_count, fail_count);

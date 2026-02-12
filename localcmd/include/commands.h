@@ -3,6 +3,14 @@
 
 #include <fujinet-fuji.h>
 
+enum {
+  TYPE_BOOL      = 'b',
+  TYPE_UNSIGNED  = 'u',
+  TYPE_FIXED_LEN = 'f',
+  TYPE_VAR_LEN   = 's',
+  TYPE_STRUCT    = '{',
+};
+
 typedef struct {
   char *name;
   uint8_t type;

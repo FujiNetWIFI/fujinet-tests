@@ -37,6 +37,10 @@ const FujiDeviceID fujiDeviceTable[] = {
 unsigned int fail_count = 0;
 static uint8_t data_buf[256], reply_buf[256], expected_buf[256];
 
+// Open Watcom can't do far pointers in a function declaration
+static TestCommand exec_test;
+static uint16_t exec_auxpos;
+
 bool run_test(TestCommand *test, void *data, const void *expected)
 {
   bool success;
@@ -89,20 +93,31 @@ bool run_test(TestCommand *test, void *data, const void *expected)
   return success;
 }
 
-void add_aux_val(TestCommand *test, uint16_t val, uint16_t size, int *auxpos)
+void add_val(uint8_t *ptr, uint16_t val, uint16_t size, uint16_t *pos)
 {
-  uint8_t *ptr;
-  int offset, remain;
+  uint16_t count, offset;
 
 
-  ptr = &test->aux1;
-  for (remain = size, offset = *auxpos; remain; remain -= 8, offset++) {
+  size /= 8;
+  ptr += *pos;
+  for (count = 0; count < size; count++) {
     // FXIME - deal with endianness
+#ifdef _CMOC_VERSION_
+    offset = size - 1 - count;
+#else /* ! _CMOC_VERSION_ */
+    offset = count;
+#endif /* _CMOC_VERSION_ */
     *(ptr + offset) = (uint8_t) (val & 0xFF);
     val >>= 8;
   }
-  *auxpos = offset;
+  *pos += count;
 
+  return;
+}
+
+void add_aux_val(TestCommand *test, uint16_t val, uint16_t size, uint16_t *auxpos)
+{
+  add_val(&test->aux1, val, size, auxpos);
   test->flags++;
   if (test->flags < 4 && size > 8) {
     test->flags += FLAG_EXCEEDS_U8;
@@ -114,12 +129,12 @@ void add_aux_val(TestCommand *test, uint16_t val, uint16_t size, int *auxpos)
 }
 
 void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
-                       int *auxpos, const void **dataptr)
+                       uint16_t *auxpos, const void **dataptr)
 {
   int val;
 
   switch (arg->type) {
-  case 'b':
+  case TYPE_BOOL:
     val = 0;
     if (!stricmp(input, "TRUE"))
       val = 1;
@@ -128,17 +143,24 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
     add_aux_val(test, val, 8, auxpos);
     break;
 
-  case 'f':
-    test->data_len = arg->size;
+  case TYPE_FIXED_LEN:
+    test->data_len += arg->size;
     strcpy((char *) data_buf, input);
     *dataptr = data_buf;
     break;
 
-  case 's':
-    test->data_len = strlen(input);
+  case TYPE_VAR_LEN:
+    test->data_len += strlen(input);
     strcpy((char *) data_buf, input);
     *dataptr = data_buf;
     add_aux_val(test, test->data_len, arg->size, auxpos);
+    break;
+
+  case TYPE_STRUCT:
+    // This is pretty much the same as TYPE_UNSIGNED but packs into
+    // data instead of aux
+    *dataptr = data_buf;
+    add_val(data_buf, atoi(input), arg->size, &test->data_len);
     break;
 
   default: // integer types
@@ -149,10 +171,6 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
 
   return;
 }
-
-// Open Watcom can't do far pointers in a function declaration
-static TestCommand exec_test;
-static int exec_auxpos;
 
 void execute_tests(const char *path)
 {
