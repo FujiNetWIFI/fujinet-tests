@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>TestFileBuilder</AssemblyName>
+    <RootNamespace>TestFileBuilder</RootNamespace>
+    <ApplicationIcon>fujinet.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="fujinet.ico" />
+    <None Update="commands.jsn">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="ZipPublishOutput" AfterTargets="Publish">
+    <PropertyGroup>
+      <ZipOutputPath>$(PublishDir)../TestJSONBuilder.zip</ZipOutputPath>
+    </PropertyGroup>
+    <Delete Files="$(ZipOutputPath)" />
+    <ZipDirectory SourceDirectory="$(PublishDir)" DestinationFile="$(ZipOutputPath)" Overwrite="true" />
+    <Message Importance="high" Text="Created TestJSONBuilder.zip at $(ZipOutputPath)" />
+  </Target>
+
+</Project>
