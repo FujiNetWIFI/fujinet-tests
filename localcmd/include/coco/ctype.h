@@ -1,7 +1,6 @@
 #ifndef CTYPE_H
 #define CTYPE_H
 
-#include <cmoc.h>
-#include <coco.h>
+#define isprint(c) (c>=0x20 && c<=0x8E)
 
-#endif // CTYPE_H
+#endif /* CTYPE_H */

@@ -3,6 +3,7 @@
 #include "results.h"
 #include "platform.h"
 #include "console.h"
+#include "get_line.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,15 +21,26 @@
 #define PREFIX ""
 #endif /* BUILD_ATARI */
 
+#define NUM_TESTFILES 10
+#define CR 0x0D
+
 // Open Watcom can't do far pointers in a function declaration
 static char testfname[32];
+static char testpath[64];
+static struct dirent testfiles[NUM_TESTFILES];
 
-bool find_file_by_extension(char *outfname, const char *ext)
+bool find_files_by_extension(char *outfname, const char *ext)
 {
   DIR *dirp;
   struct dirent *entry;
   char *p;
+  bool found = false;
+  int idx = 0;
+  int i;
+  char c;
 
+
+  memset(testfiles, 0, sizeof(testfiles));
 
   printf("SEARCHING FOR: *.%s\n", ext);
   dirp = opendir(".");
@@ -43,16 +55,45 @@ bool find_file_by_extension(char *outfname, const char *ext)
       break;
     p = strchr(entry->d_name, '.');
     if (p && !strcasecmp(p + 1, ext))
-      break;
+    {
+      strcpy(testfiles[idx].d_name, entry->d_name);
+      idx++;
+      if (idx >= NUM_TESTFILES)
+        break;
+    }
   }
 
   closedir(dirp);
-  if (!entry)
-    return 0;
 
-  strcpy(outfname, entry->d_name);
-  printf("FOUND \"%s\"\n", entry->d_name);
-  return 1;
+  if (idx)
+  {
+    printf("FOUND %d FILES\n", idx);
+    for (i = 0; i < idx; i++)
+    {
+      printf("%d: %s\n", i+1, testfiles[i].d_name);
+    }
+
+    while(true)
+    {
+      printf("SELECT FILE (1-%d) OR <ENTER>:", idx);
+      c = cgetc();
+      if (c >= '1' && c <= '0' + idx)
+      {
+        strcpy(outfname, testfiles[c - '1'].d_name);
+        found = true;
+        break;
+      }
+      else if (c == CR)
+      {
+        found = false;
+        break;
+      }
+    }
+  }
+
+  printf("\n");
+
+  return found;
 }
 
 int main(void)
@@ -69,24 +110,37 @@ int main(void)
     }
     printf("FujiNet: %-14s  Make: ???\n", fn_config.fn_version);
     if (fail_count)
-      exit(1);
+      return 1;
+
+    memset(testpath, 0, sizeof(testpath));
 
     // Make sure there is a test file before loading COMMANDS.JSN
-    if (!find_file_by_extension(testfname, "TST"))
+    if (!find_files_by_extension(testfname, "TST"))
     {
-        printf("NO TEST FILE FOUND!\n");
-        exit(1);
+      printf("ENTER TEST FILE URL:\n");
+      get_line(testpath, sizeof(testpath));
+
+      // Exit if the user didn't enter a path
+      if (testpath[0] == '\0') 
+      {
+        printf("NO TEST FILE SELECTED. EXITING.\n");
+        return 1;
+      }
+    }
+    else
+    {
+      strcpy(testpath, testfname);
     }
 
     err = load_commands(PREFIX "COMMANDS.JSN");
     if (err != FN_ERR_OK) {
       printf("No commands found - ERROR %02x %02x\n", err, fn_device_error);
-      exit(1);
+      return 1;
     }
 
     while (1) {
-      printf("RUNNING TESTS: %s\n", testfname);
-      execute_tests(testfname);
+      printf("RUNNING TESTS: %s\n", testpath);
+      execute_tests(testpath);
 
       printf("DONE\n");
       if (console_width > 32)

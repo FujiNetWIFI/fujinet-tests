@@ -7,7 +7,6 @@
 #define MAX_STDIO_OPEN_FILES 4
 #define fflush(stream) /* no-op */
 #define stdout 0
-#define isprint(c) (c>=0x20 && c<=0x8E)
 
 typedef void FILE;
 

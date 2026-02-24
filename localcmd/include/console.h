@@ -7,7 +7,8 @@
 #ifdef _CMOC_VERSION_
 
 #define clrscr() cls(1)
-#define cgetc() waitkey(0)
+
+byte cgetc(void);
 
 #else /* ! _CMOC_VERSION */
 
