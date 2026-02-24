@@ -4,6 +4,7 @@
 #include "platform.h"
 #include "console.h"
 #include "get_line.h"
+#include "json.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +27,8 @@
 
 // Open Watcom can't do far pointers in a function declaration
 static char testfname[32];
-static char testpath[64];
+static char testpath[128];
+
 static struct dirent testfiles[NUM_TESTFILES];
 
 bool find_files_by_extension(char *outfname, const char *ext)

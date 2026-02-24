@@ -11,11 +11,13 @@
 #endif /* __COLECOADAM__ */
 
 static char json_buffer[256];
+static char testurl[128];
 
 #define PORT "7501"
 #define WRITE_SOCKET "N1:TCP://:" PORT
 #define READ_SOCKET "N2:TCP://localhost:" PORT
-#define READ_URL_PREFIX "N3:"
+#define READ_URL_PREFIX "N2:"
+
 
 #define MAX_CONN_WAIT 10
 
@@ -42,13 +44,16 @@ FN_ERR json_open(const char *path)
 
     if (strncmp(path, READ_URL_PREFIX, strlen(READ_URL_PREFIX)) != 0)
     {
-      printf("URL MUST START WITH %s\n", READ_URL_PREFIX);
-      return FN_ERR_IO_ERROR;
+      sprintf(testurl, "%s%s", READ_URL_PREFIX, path);
     }
+    else
+    {
+      strncpy(testurl, path, sizeof(testurl) - 1);
+    } 
 
     // Open the path as a network url
-    printf("Opening URL (%s)...\n", path);
-    err = network_open(path, OPEN_MODE_READ, 0);
+    printf("Opening URL (%s)...\n", testurl);
+    err = network_open(testurl, OPEN_MODE_READ, 0);
     if (err != FN_ERR_OK)
     {
       printf("URL OPEN FAIL %d\n", err);
@@ -63,52 +68,41 @@ FN_ERR json_open(const char *path)
       printf("Failed to open %s %d\n", path, errno);
       return FN_ERR_IO_ERROR;
     }
-  }
 
-  printf("Opening write socket (%s)...\n", WRITE_SOCKET);
-  err = network_open(WRITE_SOCKET, OPEN_MODE_RW, 0);
-  if (err != FN_ERR_OK)
-    return err;
-
-  printf("Opening read socket (%s)...\n", READ_SOCKET);
-  err = network_open(READ_SOCKET, OPEN_MODE_READ, 0);
-  if (err != FN_ERR_OK)
-    return err;
-
-  for (status_count = 0; status_count < MAX_CONN_WAIT; status_count++) {
-    err = network_status(WRITE_SOCKET, &avail, &status, &err);
-    //printf("AVAIL: %u  STATUS: %u  ERR: %u\n", avail, status, err);
+    printf("Opening write socket (%s)...\n", WRITE_SOCKET);
+    err = network_open(WRITE_SOCKET, OPEN_MODE_RW, 0);
     if (err != FN_ERR_OK)
       return err;
-    if (status == 1)
-      break;
-  }
 
-  if (status_count >= MAX_CONN_WAIT)
-    return FN_ERR_IO_ERROR;
+    strcpy(testurl, READ_SOCKET);
+    printf("Opening read socket (%s)...\n", testurl);
+    err = network_open(READ_SOCKET, OPEN_MODE_READ, 0);
+    if (err != FN_ERR_OK)
+      return err;
 
-  printf("DOING ACCEPT\n");
-  err = network_accept(WRITE_SOCKET);
-  if (err != FN_ERR_OK) {
-    printf("ACCEPT FAIL %d\n", err);
-    return err;
-  }
-  printf("ACCEPTED\n");
-
-  for (total = 0; ; total += length) {
-    if (is_url)
+    for (status_count = 0; status_count < MAX_CONN_WAIT; status_count++)
     {
-      // Read from the network url instead of a file
-      network_status(path, &bytesWaiting, (uint8_t *) &connected, &error);
-
-      if (bytesWaiting == 0 || !error) 
-      {
-        printf("URL EOF\n");
+      err = network_status(WRITE_SOCKET, &avail, &status, &err);
+      // printf("AVAIL: %u  STATUS: %u  ERR: %u\n", avail, status, err);
+      if (err != FN_ERR_OK)
+        return err;
+      if (status == 1)
         break;
-      }
-      length = network_read(path, json_buffer, bytesWaiting > 256 ? 256 : bytesWaiting);
     }
-    else
+
+    if (status_count >= MAX_CONN_WAIT)
+      return FN_ERR_IO_ERROR;
+
+    printf("DOING ACCEPT\n");
+    err = network_accept(WRITE_SOCKET);
+    if (err != FN_ERR_OK)
+    {
+      printf("ACCEPT FAIL %d\n", err);
+      return err;
+    }
+    printf("ACCEPTED\n");
+
+    for (total = 0;; total += length)
     {
       length = fread(json_buffer, 1, 256, fd);
       if (!length)
@@ -116,39 +110,32 @@ FN_ERR json_open(const char *path)
         printf("EOF\n");
         break;
       }
+      err = network_write(WRITE_SOCKET, json_buffer, length);
+      printf("%d ", total + length);
+      fflush(stdout);
+      if (err != FN_ERR_OK)
+        break;
     }
-
-    err = network_write(WRITE_SOCKET, json_buffer, length);
-    printf("%d ", total + length);
-    fflush(stdout);
-    if (err != FN_ERR_OK)
-      break;
-  }
-
-  if (is_url)
-  {
-    network_close(path);
-  }
-  else
-  {
+    
     fclose(fd);
+
+    network_close(WRITE_SOCKET);
   }
 
-  network_close(WRITE_SOCKET);
-  return network_json_parse(READ_SOCKET);
+  return network_json_parse(testurl);
 }
 
 FN_ERR json_close()
 {
-  return network_close(READ_SOCKET);
+  return network_close(testurl);
 }
 
 int json_query(const char *query, void *buffer)
 {
-  int length = network_json_query(READ_SOCKET, query, (char *) buffer);
+  int length = network_json_query(testurl, query, (char *)buffer);
 
-
-  if (length < 0) {
+  if (length < 0)
+  {
     printf("ERROR %d\n", length);
     return length;
   }
