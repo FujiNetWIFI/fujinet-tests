@@ -60,7 +60,7 @@ void node_detach(ResultNode *node)
   if (result_list.last_failure == node)
     result_list.last_failure = node->prev;
   if (result_list.last_warn == node)
-    result_list.last_warn == node->prev;
+    result_list.last_warn = node->prev;
 
   if (node->prev)
     node->prev->next = node->next;

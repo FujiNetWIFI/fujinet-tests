@@ -78,6 +78,7 @@ bool find_files_by_extension(char *outfname, const char *ext)
     while(true)
     {
       printf("SELECT FILE (1-%d) OR <ENTER>:", idx);
+      fflush(stdout);
       c = cgetc();
       if (c >= '1' && c <= '0' + idx)
       {

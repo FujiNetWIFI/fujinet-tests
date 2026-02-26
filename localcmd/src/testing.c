@@ -40,6 +40,8 @@ static uint8_t data_buf[256], reply_buf[256], expected_buf[256];
 // Open Watcom can't do far pointers in a function declaration
 static TestCommand exec_test;
 static uint16_t exec_auxpos;
+static char query[MAX_COMMAND_LENGTH];
+static char command[MAX_COMMAND_LENGTH];
 
 bool run_test(TestCommand *test, void *data, const void *expected)
 {
@@ -204,8 +206,6 @@ void execute_tests(const char *path)
   uint16_t idx, dev_idx;
   void *data, *expected;
   bool success;
-  char command[MAX_COMMAND_LENGTH];
-  char query[MAX_COMMAND_LENGTH];
 
   printf("Running tests...\n");
 

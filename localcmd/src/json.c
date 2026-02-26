@@ -71,14 +71,20 @@ FN_ERR json_open(const char *path)
 
     printf("Opening write socket (%s)...\n", WRITE_SOCKET);
     err = network_open(WRITE_SOCKET, OPEN_MODE_RW, 0);
-    if (err != FN_ERR_OK)
+    if (err != FN_ERR_OK) {
+      // FIXME - call to get error code?
+      printf("Failed to open\n");
       return err;
+    }
 
     strcpy(testurl, READ_SOCKET);
     printf("Opening read socket (%s)...\n", testurl);
     err = network_open(READ_SOCKET, OPEN_MODE_READ, 0);
-    if (err != FN_ERR_OK)
+    if (err != FN_ERR_OK) {
+      // FIXME - call to get error code?
+      printf("Failed to open\n");
       return err;
+    }
 
     for (status_count = 0; status_count < MAX_CONN_WAIT; status_count++)
     {
