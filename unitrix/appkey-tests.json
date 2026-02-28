@@ -24,7 +24,7 @@
   },
   {
     "command": "read_appkey",
-    "expected": "TESTING"
+    "expected": {"hex": "070054455354494e47"}
   },
   {
     "command": "close_appkey"

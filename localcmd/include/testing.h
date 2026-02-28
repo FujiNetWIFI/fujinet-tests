@@ -6,8 +6,8 @@
 #endif /* __MSX__ */
 #include <fujinet-fuji.h> // for uint8_t
 
-#define FLAG_WARN   0x10
-#define FLAG_EXPERR 0x20
+#define FLAG_WARN        0x10
+#define FLAG_EXPERR      0x20
 #define FLAG_EXCEEDS_U8  0x04
 #define FLAG_EXCEEDS_U16 0x02
 
@@ -19,7 +19,6 @@ typedef struct {
   uint16_t data_len, reply_len;
 } TestCommand;
 
-extern bool run_test(TestCommand *test, void *data, const void *expected);
 extern void execute_tests(const char *path);
 
 #endif /* TESTING_H */

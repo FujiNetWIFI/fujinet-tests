@@ -9,6 +9,7 @@
 #include "diskcmd.h"
 #include "filecmd.h"
 #include "wildcard.h"
+#include "hexdump.h"
 
 enum {
   FUJI_DEVICEID_FILE            = 0xAA,
@@ -18,6 +19,12 @@ typedef struct {
   uint8_t num;
   const char *name;
 } FujiDeviceID;
+
+typedef struct {
+  size_t len;
+  bool is_binary;
+  void *data;
+} BinaryBlob;
 
 const FujiDeviceID fujiDeviceTable[] = {
   {FUJI_DEVICEID_FUJINET,   "FUJINET"},
@@ -43,7 +50,7 @@ static uint16_t exec_auxpos;
 static char query[MAX_COMMAND_LENGTH];
 static char command[MAX_COMMAND_LENGTH];
 
-bool run_test(TestCommand *test, void *data, const void *expected)
+bool run_test(TestCommand *test, void *data, const BinaryBlob *expected)
 {
   bool success;
 
@@ -60,7 +67,8 @@ bool run_test(TestCommand *test, void *data, const void *expected)
 
   if (expected)
   {
-    printf("EXPECTED: %s\n", (const char *) expected);
+    printf("EXPECTED:\n");
+    hexdump(expected->data, expected->len);
   }
 
   printf("Executing 0x%02x:%02x\n", test->device, test->command);
@@ -84,7 +92,18 @@ bool run_test(TestCommand *test, void *data, const void *expected)
 
   if (expected)
   {
-      success = wildcard_match((const char *)reply_buf, (const char *) expected);
+    if (!expected->is_binary) {
+      success = wildcard_match((const char *)reply_buf, (const char *) expected->data);
+      if (!success)
+        printf("MISMATCH: pattern: \"%s\" received: \"%s\"\n", expected->data, reply_buf);
+    }
+    else {
+      success = !memcmp(expected->data, reply_buf, expected->len);
+      if (!success) {
+        printf("MISMATCH: received:\n");
+        hexdump(reply_buf, test->reply_len);
+      }
+    }
   }
 
   if (!(test->flags & FLAG_WARN) && !success)
@@ -198,13 +217,79 @@ void add_test_argument(TestCommand *test, FujiArg *arg, const char *input,
   return;
 }
 
+int hex_val(char c) {
+    if (c >= '0' && c <= '9')
+      return c - '0';
+    if (c >= 'a' && c <= 'f')
+      return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F')
+      return c - 'A' + 10;
+    return -1;
+}
+
+size_t decode_hex(uint8_t *dest, const char *source)
+{
+  size_t count = 0;
+  int high_nibble = -1;
+
+
+  while (*source) {
+    int val = hex_val(*source);
+    if (val == -1) {
+      source++;
+      continue;
+    }
+
+    if (high_nibble == -1) {
+      // This is the first character of a byte pair
+      high_nibble = val;
+    }
+    else {
+      // This is the second character; combine them
+      dest[count++] = (high_nibble << 4) | val;
+      high_nibble = -1;
+    }
+    source++;
+  }
+
+  return count;
+}
+
+void *load_expected(uint16_t index)
+{
+  int16_t len;
+  static BinaryBlob expected;
+
+
+  sprintf(query, "/%d/expected/hex", index);
+  len = json_query(query, command);
+  if (len) {
+    expected.len = decode_hex(expected_buf, command);
+    expected.is_binary = true;
+    expected.data = expected_buf;
+    return &expected;
+  }
+
+  sprintf(query, "/%d/expected", index);
+  len = json_query(query, command);
+  if (!len)
+    return NULL;
+
+  strncpy((char *) expected_buf, command, len);
+  expected.len = strlen(expected_buf);
+  expected.is_binary = false;
+  expected.data = expected_buf;
+  return &expected;
+}
+
 void execute_tests(const char *path)
 {
   int16_t bytesread;
   int count = 0;
   FujiCommand *cmd;
   uint16_t idx, dev_idx;
-  void *data, *expected;
+  void *data;
+  BinaryBlob *expected;
   bool success;
 
   printf("Running tests...\n");
@@ -277,17 +362,7 @@ void execute_tests(const char *path)
     else if (cmd->reply.type == 'f')
       exec_test.reply_len = cmd->reply.size;
 
-    sprintf(query, "/%d/expected", count);
-    bytesread = json_query(query, command);
-    if (bytesread)
-    {
-      strncpy((char *) expected_buf, command, bytesread);
-      expected = (char *) expected_buf;
-    }
-    else
-    {
-      expected = NULL;
-    }
+    expected = load_expected(count);
 
     sprintf(query, "/%d/warnOnly", count);
     bytesread = json_query(query, command);
@@ -300,8 +375,6 @@ void execute_tests(const char *path)
       exec_test.flags |= FLAG_EXPERR;
 
     success = run_test(&exec_test, data, expected);
-
-
     result_record(count, &exec_test, cmd, success);
     count++;
 
